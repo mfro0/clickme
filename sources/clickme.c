@@ -83,7 +83,7 @@ int main(void)
             .ob_type = G_STRING,
             .ob_flags = OF_NONE,
             .ob_state = OS_NORMAL,
-            .ob_spec = { .free_string = "not clicked"},
+            .ob_spec = { .free_string = "not clicked "},
             .ob_x = 20,
             .ob_y = 50,
             .ob_width = 100,
@@ -98,7 +98,7 @@ int main(void)
             .ob_state = OS_NORMAL,
             .ob_spec = { .free_string = " EXIT " },
             .ob_x = 20,
-            .ob_y = 70,
+            .ob_y = 80,
             .ob_width = 100,
             .ob_height = 16
         }
@@ -158,17 +158,17 @@ int main(void)
                 if (evo.emo_mbutton == 1 && evo.emo_mclicks == 1)
                 {
                     dial[ob].ob_state |= OS_SELECTED;
-                    strcpy(dial[2].ob_spec.free_string, "clicked");
+                    dial[2].ob_spec.free_string = "clicked";
                 }
                 else
                 {
                     dial[ob].ob_state &= ~OS_SELECTED;
-                    strcpy(dial[2].ob_spec.free_string, "not clicked"); /* button released after press... */
+                    dial[2].ob_spec.free_string = "not clicked";
                 }
-                evi.emi_bstate ^= 1;                             /* press recognised, wait for release */
                 appl_write(ap_id, sizeof(msg), msg);
-            }
 
+                evi.emi_bstate ^= 1;                             /* press recognised, wait for release */
+            }
         }
 
         if (evnt & MU_MESAG)
