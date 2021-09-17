@@ -43,7 +43,7 @@ int main(void)
         {
             .ob_next = -1,
             .ob_head = 1,
-            .ob_tail = 2,
+            .ob_tail = 3,
             .ob_type = G_BOX,
             .ob_flags = OF_FL3DBAK,
             .ob_state = OS_NORMAL,
@@ -118,17 +118,20 @@ int main(void)
     }
 
 
-    EVMULT_IN ei=
+    /*
+     * parameter struct for evnt_multi_fast
+     */
+    EVMULT_IN evi =
     {
-        MU_MESAG | MU_BUTTON,
-        2,
-        1,
-        1,
-        0,
-        {0, 0, 0, 0},
-        0,
-        {0, 0, 0, 0},
-        0, 0
+        .emi_flags = MU_MESAG | MU_BUTTON,
+        .emi_bclicks = 1,
+        .emi_bmask = 1,
+        .emi_bstate = 1,
+        .emi_m1leave = 0,
+        .emi_m1 = {0, 0, 0, 0},
+        .emi_m2leave = 0,
+        .emi_m2 = {0, 0, 0, 0},
+        .emi_tlow = 0, .emi_thigh = 0
     };
 
     do
@@ -136,9 +139,9 @@ int main(void)
         short buf[8];
         GRECT wr;
 
-        EVMULT_OUT eo;
+        EVMULT_OUT evo;
 
-        evnt = evnt_multi_fast(&ei, buf, &eo);
+        evnt = evnt_multi_fast(&evi, buf, &evo);
 
         if (evnt & MU_BUTTON)
         {
@@ -146,35 +149,26 @@ int main(void)
             short msg[8] = { WM_REDRAW, ap_id, 0, whandle, wb.g_x, wb.g_y, wb.g_w, wb.g_h };
 
 
-            ob = objc_find(dial, ROOT, MAX_DEPTH, eo.emo_mouse.p_x, eo.emo_mouse.p_y);
-            dbg("at (%d, %d) found object %d\r\n", eo.emo_mouse.p_x, eo.emo_mouse.p_y, ob);
+            ob = objc_find(dial, ROOT, MAX_DEPTH, evo.emo_mouse.p_x, evo.emo_mouse.p_y);
+            dbg("at (%d, %d) found object %d\r\n", evo.emo_mouse.p_x, evo.emo_mouse.p_y, ob);
             if (dial[ob].ob_flags & OF_SELECTABLE)
             {
-                dbg("emo_mbutton=%d, emo_mclicks=%d, obj=%d\r\n", eo.emo_mbutton, eo.emo_mclicks, ob);
+                dbg("emo_events=%d, emo_mbutton=%d, emo_mclicks=%d, obj=%d\r\n", evo.emo_events, evo.emo_mbutton, evo.emo_mclicks, ob);
                 /* an element of our object tree was clicked */
-                if (eo.emo_mbutton == 1 && eo.emo_mclicks == 1)
+                if (evo.emo_mbutton == 1 && evo.emo_mclicks == 1)
                 {
-                    ei.emi_bstate ^= 1;                             /* press recognised, wait for release */
-
-                    /* toggle selected state on button press */
-                    if (!  (dial[ob].ob_state & OS_SELECTED))
-                    {
-                        dial[ob].ob_state |= OS_SELECTED;
-                        strcpy(dial[2].ob_spec.free_string, "clicked");
-                    }
-                    else
-                    {
-                        dial[ob].ob_state &= ~OS_SELECTED;
-                        strcpy(dial[2].ob_spec.free_string, "not clicked"); /* button released after press... */
-                    }
-
-                    appl_write(ap_id, sizeof(msg), msg);           /* force redraw */
+                    dial[ob].ob_state |= OS_SELECTED;
+                    strcpy(dial[2].ob_spec.free_string, "clicked");
                 }
                 else
                 {
-                    ei.emi_bstate = 1;                              /* and rearm for a button press */
+                    dial[ob].ob_state &= ~OS_SELECTED;
+                    strcpy(dial[2].ob_spec.free_string, "not clicked"); /* button released after press... */
                 }
+                evi.emi_bstate ^= 1;                             /* press recognised, wait for release */
+                appl_write(ap_id, sizeof(msg), msg);
             }
+
         }
 
         if (evnt & MU_MESAG)
@@ -225,6 +219,7 @@ int main(void)
 
                 case WM_CLOSED:
                     wind_close(whandle);
+                    wind_delete(whandle);
 
                     if (_app)
                         quit = true;
