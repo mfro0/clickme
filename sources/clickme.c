@@ -12,6 +12,9 @@
 #define dbg(format, arg...) do { ; } while (0)
 #endif /* DEBUG */
 
+static short vdi_handle;
+static short g_wc, g_hc, g_wb, g_hb;
+
 void open_window(short *whandle, OBJECT *dial, GRECT *wb, GRECT *ww)
 {
     wind_calc(WC_BORDER, NAME | CLOSER | MOVER, 100, 100,
@@ -28,6 +31,26 @@ void open_window(short *whandle, OBJECT *dial, GRECT *wb, GRECT *ww)
 
 }
 
+struct uparm
+{
+
+} uparms =
+{
+
+};
+
+short ucode(PARMBLK *pblk)
+{
+    OBJECT *tree = pblk->pb_tree;
+
+    short pxy[] = { pblk->pb_x - 2 + pblk->pb_w - 8, pblk->pb_y - 2,
+                    pblk->pb_x + 2 + pblk->pb_w - 8 + 2, pblk->pb_y + 2 };
+    vsf_color(vdi_handle, 1);
+    vsf_interior(vdi_handle, 1);
+    vr_recfl(vdi_handle, pxy);
+    return 0;
+}
+
 int main(void)
 {
     short ap_id;
@@ -37,10 +60,17 @@ int main(void)
     short evnt;
     bool quit = false;
 
+    struct user_block ublk =
+    {
+        .ub_code = ucode,
+        .ub_parm = (long) &uparms
+    };
+
     OBJECT dial[] =
     {
         /* a dialog object frame */
         {
+            /* 0 */
             .ob_next = -1,
             .ob_head = 1,
             .ob_tail = 3,
@@ -60,10 +90,11 @@ int main(void)
             .ob_x = 0,
             .ob_y = 0,
             .ob_width = 210,
-            .ob_height = 130
+            .ob_height = 230
         },
         /* with one single button in it */
         {
+            /* 1 */
             .ob_next = 2,
             .ob_head = -1,
             .ob_tail = -1,
@@ -77,6 +108,7 @@ int main(void)
             .ob_height = 16
         },
         {
+            /* 2 */
             .ob_next = 3,
             .ob_head = -1,
             .ob_tail = -1,
@@ -90,21 +122,102 @@ int main(void)
             .ob_height = 16
         },
         {
+            /* 3 */
             .ob_next = 0,
-            .ob_head = -1,
-            .ob_tail = -1,
-            .ob_type = G_BUTTON,
-            .ob_flags = OF_DEFAULT | OF_SELECTABLE | OF_FL3DACT | OF_EXIT,
+            .ob_head = 4,
+            .ob_tail = 7,
+            .ob_type = G_BOX,
+            .ob_flags = OF_NONE,
             .ob_state = OS_NORMAL,
-            .ob_spec = { .free_string = " EXIT " },
+            .ob_spec.obspec =
+            {
+                .framecol = G_BLACK,
+                .framesize = 1,
+                .textcol = G_BLACK,
+                .interiorcol = G_LBLACK,
+                .fillpattern = IP_HOLLOW,
+
+            },
             .ob_x = 20,
             .ob_y = 80,
             .ob_width = 100,
-            .ob_height = 16
+            .ob_height = 150
+        },
+        {
+            /* 4 */
+            .ob_next = 5,
+            .ob_head = -1,
+            .ob_tail = -1,
+            .ob_type = G_BOX,
+            .ob_flags = OF_SELECTABLE | OF_TOUCHEXIT,
+            .ob_state = OS_NORMAL,
+            .ob_spec.obspec =
+            {
+                .framecol = G_BLACK,
+                .framesize = 1,
+                .textcol = G_BLACK,
+                .interiorcol = G_LBLACK,
+                .fillpattern = IP_HOLLOW,
+
+            },
+            .ob_x = 0,
+            .ob_y = 0,
+            .ob_width = 100,
+            .ob_height = 75
+        },
+        {
+            /* 5 */
+            .ob_next = 6,
+            .ob_head = -1,
+            .ob_tail = -1,
+            .ob_type = G_BOX,
+            .ob_flags = OF_SELECTABLE | OF_TOUCHEXIT,
+            .ob_state = OS_NORMAL,
+            .ob_spec.obspec =
+            {
+                .framecol = G_BLACK,
+                .framesize = 1,
+                .textcol = G_BLACK,
+                .interiorcol = G_LBLACK,
+                .fillpattern = IP_HOLLOW,
+
+            },
+            .ob_x = 0,
+            .ob_y = 75,
+            .ob_width = 100,
+            .ob_height = 75
+        },
+        {
+            /* 6 */
+            .ob_next = 7,
+            .ob_head = -1,
+            .ob_tail = -1,
+            .ob_type = G_BOX,
+            .ob_flags = OF_SELECTABLE | OF_TOUCHEXIT | OF_FL3DACT,
+            .ob_spec = { 0L },
+            .ob_x = dial[5].ob_x + dial[5].ob_width - 20,
+            .ob_y = dial[5].ob_y - 4,
+            .ob_width = 8,
+            .ob_height = 8
+        },
+        {
+            /* 7 */
+            .ob_next = 3,
+            .ob_head = -1,
+            .ob_tail = -1,
+            .ob_type = G_BOX,
+            .ob_flags = OF_SELECTABLE | OF_TOUCHEXIT | OF_FL3DACT,
+            .ob_spec = { 0L },
+            .ob_x = dial[5].ob_x + dial[5].ob_width - 20,
+            .ob_y = dial[5].ob_y - 4,
+            .ob_width = 8,
+            .ob_height = 8
         }
+
     };
 
     ap_id = appl_init();
+    vdi_handle = graf_handle(&g_wc, &g_hc, &g_wb, &g_hb);
 
     extern short _app;
     if (! _app)
@@ -151,7 +264,7 @@ int main(void)
 
             ob = objc_find(dial, ROOT, MAX_DEPTH, evo.emo_mouse.p_x, evo.emo_mouse.p_y);
             dbg("at (%d, %d) found object %d\r\n", evo.emo_mouse.p_x, evo.emo_mouse.p_y, ob);
-            if (dial[ob].ob_flags & OF_SELECTABLE)
+            if ((dial[ob].ob_flags & OF_SELECTABLE) && (! (dial[ob].ob_flags == OF_TOUCHEXIT)))
             {
                 dbg("emo_events=%d, emo_mbutton=%d, emo_mclicks=%d, obj=%d\r\n", evo.emo_events, evo.emo_mbutton, evo.emo_mclicks, ob);
                 /* an element of our object tree was clicked */
@@ -168,6 +281,17 @@ int main(void)
                 appl_write(ap_id, sizeof(msg), msg);
 
                 evi.emi_bstate ^= 1;                             /* press recognised, wait for release */
+            }
+
+            if ((dial[ob].ob_flags & OF_TOUCHEXIT) &&
+                    (dial[ob].ob_type == G_BUTTON))
+            {
+                short perc;
+
+                dbg("touchexit object selected\r\n");
+
+                perc = graf_slidebox(dial, 3, 7, 1);
+
             }
         }
 
