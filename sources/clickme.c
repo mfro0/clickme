@@ -39,18 +39,6 @@ struct uparm
 
 };
 
-short ucode(PARMBLK *pblk)
-{
-    OBJECT *tree = pblk->pb_tree;
-
-    short pxy[] = { pblk->pb_x - 2 + pblk->pb_w - 8, pblk->pb_y - 2,
-                    pblk->pb_x + 2 + pblk->pb_w - 8 + 2, pblk->pb_y + 2 };
-    vsf_color(vdi_handle, 1);
-    vsf_interior(vdi_handle, 1);
-    vr_recfl(vdi_handle, pxy);
-    return 0;
-}
-
 int main(void)
 {
     short ap_id;
@@ -59,12 +47,6 @@ int main(void)
     GRECT ww;
     short evnt;
     bool quit = false;
-
-    struct user_block ublk =
-    {
-        .ub_code = ucode,
-        .ub_parm = (long) &uparms
-    };
 
     OBJECT dial[] =
     {
@@ -78,19 +60,10 @@ int main(void)
             .ob_flags = OF_FL3DBAK,
             .ob_state = OS_NORMAL,
             .ob_spec = { 0L },
-            /* can't use detailed ob_spec for 3D appearance
-             * .ob_spec.obspec =
-                (BFOBSPEC)
-            {
-                .framecol = G_BLACK,
-                .textcol = G_BLACK,
-                .interiorcol = G_LBLACK,
-                .fillpattern = IP_HOLLOW,
-            },*/
             .ob_x = 0,
             .ob_y = 0,
             .ob_width = 210,
-            .ob_height = 230
+            .ob_height = 270
         },
         /* with one single button in it */
         {
@@ -127,17 +100,9 @@ int main(void)
             .ob_head = 4,
             .ob_tail = 7,
             .ob_type = G_BOX,
-            .ob_flags = OF_NONE,
+            .ob_flags = OF_NONE | OF_FL3DIND,
             .ob_state = OS_NORMAL,
-            .ob_spec.obspec =
-            {
-                .framecol = G_BLACK,
-                .framesize = 1,
-                .textcol = G_BLACK,
-                .interiorcol = G_LBLACK,
-                .fillpattern = IP_HOLLOW,
-
-            },
+            .ob_spec.obspec = { 0L },
             .ob_x = 20,
             .ob_y = 80,
             .ob_width = 100,
@@ -173,15 +138,7 @@ int main(void)
             .ob_type = G_BOX,
             .ob_flags = OF_SELECTABLE | OF_TOUCHEXIT,
             .ob_state = OS_NORMAL,
-            .ob_spec.obspec =
-            {
-                .framecol = G_BLACK,
-                .framesize = 1,
-                .textcol = G_BLACK,
-                .interiorcol = G_LBLACK,
-                .fillpattern = IP_HOLLOW,
-
-            },
+            .ob_spec.obspec = { 0L },
             .ob_x = 0,
             .ob_y = 75,
             .ob_width = 100,
@@ -195,8 +152,8 @@ int main(void)
             .ob_type = G_BOX,
             .ob_flags = OF_SELECTABLE | OF_TOUCHEXIT | OF_FL3DACT,
             .ob_spec = { 0L },
-            .ob_x = dial[5].ob_x + dial[5].ob_width - 20,
-            .ob_y = dial[5].ob_y - 4,
+            .ob_x = (short)(dial[5].ob_x + dial[5].ob_width - 20),
+            .ob_y = (short)(dial[5].ob_y - 4),
             .ob_width = 8,
             .ob_height = 8
         },
@@ -208,8 +165,8 @@ int main(void)
             .ob_type = G_BOX,
             .ob_flags = OF_SELECTABLE | OF_TOUCHEXIT | OF_FL3DACT,
             .ob_spec = { 0L },
-            .ob_x = dial[5].ob_x + dial[5].ob_width - 20,
-            .ob_y = dial[5].ob_y - 4,
+            .ob_x = (short) (dial[5].ob_x + dial[5].ob_width - 20),
+            .ob_y = (short) (dial[5].ob_y - 4),
             .ob_width = 8,
             .ob_height = 8
         }
