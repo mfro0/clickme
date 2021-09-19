@@ -48,14 +48,23 @@ int main(void)
     short evnt;
     bool quit = false;
 
+#define ROOTOBJ         0
+#define CLICK_ME        1
+#define SHOW_CLICK      2
+#define PART_FRAME      3
+#define PART_ONE        4
+#define PART_TWO        5
+#define PART_ONE_KNOB   6
+#define PART_TWO_KNOB   7
+
     OBJECT dial[] =
     {
         /* a dialog object frame */
         {
             /* 0 */
-            .ob_next = -1,
-            .ob_head = 1,
-            .ob_tail = 3,
+            .ob_next = NIL,
+            .ob_head = CLICK_ME,
+            .ob_tail = PART_FRAME,
             .ob_type = G_BOX,
             .ob_flags = OF_FL3DBAK,
             .ob_state = OS_NORMAL,
@@ -68,9 +77,9 @@ int main(void)
         /* with one single button in it */
         {
             /* 1 */
-            .ob_next = 2,
-            .ob_head = -1,
-            .ob_tail = -1,
+            .ob_next = SHOW_CLICK,
+            .ob_head = NIL,
+            .ob_tail = NIL,
             .ob_type = G_BUTTON,
             .ob_flags = OF_SELECTABLE | OF_FL3DACT,
             .ob_state = OS_NORMAL,
@@ -82,9 +91,9 @@ int main(void)
         },
         {
             /* 2 */
-            .ob_next = 3,
-            .ob_head = -1,
-            .ob_tail = -1,
+            .ob_next = PART_FRAME,
+            .ob_head = NIL,
+            .ob_tail = NIL,
             .ob_type = G_STRING,
             .ob_flags = OF_NONE,
             .ob_state = OS_NORMAL,
@@ -96,9 +105,9 @@ int main(void)
         },
         {
             /* 3 */
-            .ob_next = 0,
-            .ob_head = 4,
-            .ob_tail = 7,
+            .ob_next = ROOTOBJ,
+            .ob_head = PART_ONE,
+            .ob_tail = PART_TWO_KNOB,
             .ob_type = G_BOX,
             .ob_flags = OF_NONE | OF_FL3DIND,
             .ob_state = OS_NORMAL,
@@ -110,11 +119,11 @@ int main(void)
         },
         {
             /* 4 */
-            .ob_next = 5,
-            .ob_head = -1,
-            .ob_tail = -1,
+            .ob_next = PART_TWO,
+            .ob_head = NIL,
+            .ob_tail = NIL,
             .ob_type = G_BOX,
-            .ob_flags = OF_SELECTABLE | OF_TOUCHEXIT,
+            .ob_flags = OF_SELECTABLE | OF_TOUCHEXIT | OF_FL3DIND,
             .ob_state = OS_NORMAL,
             .ob_spec.obspec =
             {
@@ -132,13 +141,21 @@ int main(void)
         },
         {
             /* 5 */
-            .ob_next = 6,
-            .ob_head = -1,
-            .ob_tail = -1,
+            .ob_next = PART_ONE_KNOB,
+            .ob_head = NIL,
+            .ob_tail = NIL,
             .ob_type = G_BOX,
-            .ob_flags = OF_SELECTABLE | OF_TOUCHEXIT,
+            .ob_flags = OF_SELECTABLE | OF_TOUCHEXIT | OF_FL3DIND,
             .ob_state = OS_NORMAL,
-            .ob_spec.obspec = { 0L },
+            .ob_spec.obspec =
+            {
+                .framecol = G_BLACK,
+                .framesize = 1,
+                .textcol = G_BLACK,
+                .interiorcol = G_LBLACK,
+                .fillpattern = IP_HOLLOW,
+
+            },
             .ob_x = 0,
             .ob_y = 75,
             .ob_width = 100,
@@ -146,29 +163,29 @@ int main(void)
         },
         {
             /* 6 */
-            .ob_next = 7,
-            .ob_head = -1,
-            .ob_tail = -1,
+            .ob_next = PART_TWO_KNOB,
+            .ob_head = NIL,
+            .ob_tail = NIL,
             .ob_type = G_BOX,
             .ob_flags = OF_SELECTABLE | OF_TOUCHEXIT | OF_FL3DACT,
             .ob_spec = { 0L },
-            .ob_x = (short)(dial[5].ob_x + dial[5].ob_width - 20),
-            .ob_y = (short)(dial[5].ob_y - 4),
-            .ob_width = 8,
-            .ob_height = 8
+            .ob_x = (short)(dial[PART_TWO].ob_x + dial[PART_TWO].ob_width - 20),
+            .ob_y = (short)(dial[PART_TWO].ob_y - 3),
+            .ob_width = 5,
+            .ob_height = 5
         },
         {
             /* 7 */
-            .ob_next = 3,
-            .ob_head = -1,
-            .ob_tail = -1,
+            .ob_next = PART_FRAME,
+            .ob_head = NIL,
+            .ob_tail = NIL,
             .ob_type = G_BOX,
             .ob_flags = OF_SELECTABLE | OF_TOUCHEXIT | OF_FL3DACT,
             .ob_spec = { 0L },
-            .ob_x = (short) (dial[5].ob_x + dial[5].ob_width - 20),
-            .ob_y = (short) (dial[5].ob_y - 4),
-            .ob_width = 8,
-            .ob_height = 8
+            .ob_x = (short) (dial[PART_TWO].ob_x + dial[PART_TWO].ob_width - 20),
+            .ob_y = (short) (dial[PART_TWO].ob_y - 3),
+            .ob_width = 5,
+            .ob_height = 5
         }
 
     };
@@ -240,15 +257,15 @@ int main(void)
                 evi.emi_bstate ^= 1;                             /* press recognised, wait for release */
             }
 
-            if ((dial[ob].ob_flags & OF_TOUCHEXIT) &&
-                    (dial[ob].ob_type == G_BUTTON))
+            if (ob == 7)
             {
                 short perc;
 
                 dbg("touchexit object selected\r\n");
-
+                graf_mouse(FLAT_HAND, NULL);
                 perc = graf_slidebox(dial, 3, 7, 1);
-
+                graf_mouse(ARROW, NULL);
+                dial[7].ob_state &= ~OS_SELECTED;
             }
         }
 
