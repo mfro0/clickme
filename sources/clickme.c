@@ -168,9 +168,9 @@ int main(void)
             .ob_tail = NIL,
             .ob_type = G_BOX,
             .ob_flags = OF_SELECTABLE | OF_TOUCHEXIT | OF_FL3DACT,
-            .ob_spec = { 0L },
-            .ob_x = (short)(dial[PART_TWO].ob_x + dial[PART_TWO].ob_width - 20),
-            .ob_y = (short)(dial[PART_TWO].ob_y - 3),
+            .ob_spec.obspec = { .interiorcol = G_RED, .fillpattern = IP_SOLID },
+            .ob_x = (short)(dial[PART_ONE].ob_x + dial[PART_TWO].ob_width - 20),
+            .ob_y = (short)(dial[PART_ONE].ob_y - 3),
             .ob_width = 5,
             .ob_height = 5
         },
@@ -257,7 +257,7 @@ int main(void)
                 evi.emi_bstate ^= 1;                             /* press recognised, wait for release */
             }
 
-            if (ob == 7)
+            if (ob == PART_TWO_KNOB)
             {
                 short perc;
 
@@ -266,6 +266,14 @@ int main(void)
                 perc = graf_slidebox(dial, 3, 7, 1);
                 graf_mouse(ARROW, NULL);
                 dial[7].ob_state &= ~OS_SELECTED;
+                dbg("perc=%d\r\n", perc);
+
+                dial[PART_ONE].ob_height = dial[PART_FRAME].ob_height * perc / 1000L;
+                dial[PART_TWO].ob_height = dial[PART_FRAME].ob_height * (1000 - perc) / 1000L;
+                dial[PART_TWO].ob_y = dial[PART_ONE].ob_height;
+                dial[PART_TWO_KNOB].ob_y = dial[PART_TWO].ob_y - 3;
+
+                appl_write(ap_id, sizeof(msg), msg);
             }
         }
 
