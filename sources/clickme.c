@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <gem.h>
 
 #define DEBUG
@@ -56,6 +57,30 @@ int main(void)
 #define PART_TWO        5
 #define PART_ONE_KNOB   6
 #define PART_TWO_KNOB   7
+
+    TEDINFO part1_but =
+    {
+        .te_ptext = "1000",
+        .te_ptmplt = NULL,
+        .te_pvalid = "9999",
+        .te_color = 1 << 8 | 1 << 12,
+        .te_font = 5,
+        .te_fontid = 0,
+        .te_just = TE_CNTR,
+        .te_thickness = 1
+    };
+
+    TEDINFO part2_but =
+    {
+        .te_ptext = "1001",
+        .te_ptmplt = NULL,
+        .te_pvalid = "9999",
+        .te_color = 1 << 8 | 1 << 12,
+        .te_font = 5,
+        .te_fontid = 0,
+        .te_just = TE_CNTR,
+        .te_thickness = 1
+    };
 
     OBJECT dial[] =
     {
@@ -122,18 +147,10 @@ int main(void)
             .ob_next = PART_TWO,
             .ob_head = NIL,
             .ob_tail = NIL,
-            .ob_type = G_BOX,
-            .ob_flags = OF_SELECTABLE | OF_TOUCHEXIT | OF_FL3DIND,
+            .ob_type = G_BOXTEXT,
+            .ob_flags = OF_SELECTABLE,
             .ob_state = OS_NORMAL,
-            .ob_spec.obspec =
-            {
-                .framecol = G_BLACK,
-                .framesize = 1,
-                .textcol = G_BLACK,
-                .interiorcol = G_LBLACK,
-                .fillpattern = IP_HOLLOW,
-
-            },
+            .ob_spec.tedinfo = &part1_but,
             .ob_x = 0,
             .ob_y = 0,
             .ob_width = 100,
@@ -144,18 +161,10 @@ int main(void)
             .ob_next = PART_ONE_KNOB,
             .ob_head = NIL,
             .ob_tail = NIL,
-            .ob_type = G_BOX,
-            .ob_flags = OF_SELECTABLE | OF_TOUCHEXIT | OF_FL3DIND,
+            .ob_type = G_BOXTEXT,
+            .ob_flags = OF_SELECTABLE,
             .ob_state = OS_NORMAL,
-            .ob_spec.obspec =
-            {
-                .framecol = G_BLACK,
-                .framesize = 1,
-                .textcol = G_BLACK,
-                .interiorcol = G_LBLACK,
-                .fillpattern = IP_HOLLOW,
-
-            },
+            .ob_spec.tedinfo = &part2_but,
             .ob_x = 0,
             .ob_y = 75,
             .ob_width = 100,
@@ -265,12 +274,15 @@ int main(void)
                 graf_mouse(FLAT_HAND, NULL);
                 perc = graf_slidebox(dial, 3, 7, 1);
                 graf_mouse(ARROW, NULL);
-                dial[7].ob_state &= ~OS_SELECTED;
+                dial[PART_TWO_KNOB].ob_state &= ~OS_SELECTED;
                 dbg("perc=%d\r\n", perc);
 
                 dial[PART_ONE].ob_height = dial[PART_FRAME].ob_height * perc / 1000L;
                 dial[PART_TWO].ob_height = dial[PART_FRAME].ob_height * (1000 - perc) / 1000L;
                 dial[PART_TWO].ob_y = dial[PART_ONE].ob_height;
+                sprintf(dial[PART_ONE].ob_spec.tedinfo->te_ptext, "%d", perc);
+                sprintf(dial[PART_TWO].ob_spec.tedinfo->te_ptext, "%d", 1000 - perc);
+
                 dial[PART_TWO_KNOB].ob_y = dial[PART_TWO].ob_y - 3;
 
                 appl_write(ap_id, sizeof(msg), msg);
